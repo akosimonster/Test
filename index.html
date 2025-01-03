@@ -1,0 +1,216 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>𝗖𝗛𝗘𝗟𝗟𝗔 𝗟𝗢𝗚𝗦 𝗚𝗘𝗡𝗘𝗥𝗔𝗧𝗢𝗥 𝗣𝗥𝗘𝗠𝗜𝗨𝗠 𝗪𝗘𝗕</title>
+    <link rel="icon" href="https://i.ibb.co/g6LbvBG/photo-2024-11-21-13-31-56.jpg">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+</head>
+<body class="bg-gray-900 text-white font-sans flex flex-col min-h-screen">
+    <header class="w-full bg-gray-800 py-6">
+        <h1 class="text-4xl font-extrabold text-center text-blue-500 tracking-wide">CHELLA LOGS PREMIUMS</h1>
+    </header>
+    <section id="fileList" class="container mx-auto mt-12 text-center px-4 fade-in">
+        <p class="text-xl text-gray-300">Loading files...</p>
+    </section>
+    <section id="fileSelection" class="flex flex-col items-center justify-center container mx-auto mt-12 text-center px-4 flex-1 hidden fade-in">
+        <h2 class="text-2xl mb-6 text-blue-400 font-semibold">Choose the number of lines to download:</h2>
+        <div id="fileInfo" class="text-gray-400 mb-6">
+            <p>File <span id="currentFileIndex">1</span> of <span id="totalFilesCount">0</span></p>
+        </div>
+        <div id="fileGrid" class="flex justify-center w-full gap-6 mb-6"></div>
+        <div class="mt-6">
+            <button onclick="navigateFile(-1)" class="px-4 py-2 bg-blue-600 text-white rounded-lg shadow-lg hover:bg-blue-500 transition duration-200 ease-in-out transform hover:scale-105">Previous</button>
+            <button onclick="navigateFile(1)" class="px-4 py-2 bg-blue-600 text-white rounded-lg shadow-lg hover:bg-blue-500 transition duration-200 ease-in-out transform hover:scale-105">Next</button>
+        </div>
+        <div class="mt-6">
+            <input type="number" id="numLines" placeholder="Enter number of lines" class="w-full max-w-xs p-4 bg-gray-800 text-white rounded-md shadow-md focus:ring-2 focus:ring-blue-500 focus:outline-none transition duration-200 ease-in-out transform hover:scale-105" min="1" />
+        </div>
+        <div class="mt-6">
+            <input type="text" id="customFileName" placeholder="Enter new file name (optional)" class="w-full max-w-xs p-4 bg-gray-800 text-white rounded-md shadow-md focus:ring-2 focus:ring-blue-500 focus:outline-none transition duration-200 ease-in-out transform hover:scale-105" />
+        </div>
+        <div class="container mx-auto mt-6 text-center">
+            <button onclick="downloadFile()" class="px-8 py-4 bg-blue-600 text-white rounded-full shadow-lg hover:bg-blue-500 focus:ring-2 focus:ring-blue-300 focus:outline-none transition duration-200 ease-in-out transform hover:scale-105">Download</button>
+        </div>
+    </section>
+    <div id="errorMessage" class="text-red-500 mt-6 text-center hidden">Error occurred. Please try again.</div>
+    <script>
+        // const apiKey = localStorage.getItem('apiKey');
+// if (!apiKey) {
+//     window.location.href = 'enter-key.html';
+// }
+
+// validateKey();
+
+// setInterval(validateKey, 30000);
+
+        // function validateKey() {
+//     fetch('/validate-key', {
+//         method: 'POST',
+//         headers: {
+//             'Content-Type': 'application/json',
+//         },
+//         body: JSON.stringify({ apiKey })
+//     })
+//     .then(response => response.json())
+//     .then(result => {
+//         if (!result.valid) {
+//             showExpiredKeyNotification();
+//         } else {
+//             fetchFiles();
+//         }
+//     })
+//     .catch(() => {
+//         document.getElementById('fileList').style.display = 'block';
+document.getElementById('fileSelection').style.display = 'block';
+//     });
+// }
+
+        function showExpiredKeyNotification() {
+            Swal.fire({
+                iconHtml: `<img src="https://i.ibb.co/g6LbvBG/photo-2024-11-21-13-31-56.jpg" alt="Expired Key" class="w-12 h-12 rounded-full">`,
+                title: 'API Key Expired!',
+                text: 'The API key you are using has expired. Please enter a new key.',
+                confirmButtonText: 'OK',
+            }).then(() => {
+                localStorage.removeItem('apiKey');
+                window.location.href = 'enter-key.html';
+            });
+        }
+
+        function fetchFiles() {
+            fetch('/files', {
+                method: 'GET',
+                headers: {
+                    'x-api-key': apiKey
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (Array.isArray(data) && data.length > 0) {
+                    files = data;
+                    document.getElementById('totalFilesCount').textContent = files.length;
+                    displayFile(currentIndex);
+                } else {
+                    document.getElementById('fileList').innerHTML = '<p class="text-xl text-gray-300">No files available.</p>';
+                }
+            })
+            .catch(error => {
+                console.error('Error fetching files:', error);
+                document.getElementById('errorMessage').innerText = error.message;
+                document.getElementById('errorMessage').style.display = 'block';
+            });
+        }
+
+        let files = [];
+        let currentIndex = 0;
+
+        function displayFile(index) {
+            if (index < 0 || index >= files.length) return;
+
+            const file = files[index];
+            const fileGrid = document.getElementById('fileGrid');
+            fileGrid.innerHTML = '';
+
+            const fileCard = document.createElement('div');
+            fileCard.classList.add('file-card', 'bg-gray-800', 'p-6', 'rounded-lg', 'shadow-lg', 'transition', 'duration-300', 'ease-in-out', 'hover:bg-gray-700', 'cursor-pointer', 'hover:scale-105');
+
+            const fileImage = document.createElement('img');
+            fileImage.src = 'https://i.ibb.co/g6LbvBG/photo-2024-11-21-13-31-56.jpg';
+            fileImage.alt = file.filename;
+            fileImage.classList.add('w-full', 'h-40', 'object-cover', 'rounded-lg', 'mb-4');
+
+            const fileName = document.createElement('p');
+            fileName.textContent = file.filename;
+            fileName.classList.add('text-center', 'text-white', 'font-semibold', 'text-lg');
+
+            const fileLineCount = document.createElement('p');
+            fileLineCount.textContent = file.lineCount ? `Estimated lines: ${file.lineCount}` : 'Estimated lines: Unknown';
+            fileLineCount.classList.add('text-center', 'text-gray-400', 'text-sm');
+
+            fileCard.appendChild(fileImage);
+            fileCard.appendChild(fileName);
+            fileCard.appendChild(fileLineCount);
+            fileGrid.appendChild(fileCard);
+
+            selectFile(file.filename, fileCard);
+
+            document.getElementById('fileList').style.display = 'none';
+            document.getElementById('fileSelection').style.display = 'block';
+            updateFileIndex();
+        }
+
+        let selectedCard = null;
+        let selectedFileName = '';
+
+        function selectFile(filename, fileCard) {
+            if (selectedCard) {
+                selectedCard.classList.remove('border-4', 'border-blue-500', 'bg-gray-700');
+            }
+            fileCard.classList.add('border-4', 'border-blue-500', 'bg-gray-700');
+            selectedCard = fileCard;
+            selectedFileName = filename;
+            document.getElementById('numLines').focus();
+        }
+
+        function downloadFile() {
+            let fileName = selectedFileName;
+            const numLines = parseInt(document.getElementById('numLines').value);
+            const customFileName = document.getElementById('customFileName').value.trim();
+
+            if (customFileName) {
+                fileName = customFileName;
+            }
+
+            if (!fileName || isNaN(numLines) || numLines <= 0) {
+                document.getElementById('errorMessage').innerText = 'Please select a file and enter a valid number of lines.';
+                document.getElementById('errorMessage').style.display = 'block';
+                return;
+            }
+
+            fetch('/get-lines', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'x-api-key': apiKey
+                },
+                body: JSON.stringify({ fileName, numLines })
+            })
+            .then(response => {
+                if (response.status === 200) {
+                    return response.text();
+                } else {
+                    return Promise.reject('Error fetching the file');
+                }
+            })
+            .then(content => {
+                const blob = new Blob([content], { type: 'text/plain' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = fileName;
+                a.click();
+                URL.revokeObjectURL(url);
+            })
+            .catch(error => {
+                document.getElementById('errorMessage').innerText = error;
+                document.getElementById('errorMessage').style.display = 'block';
+            });
+        }
+
+        function navigateFile(direction) {
+            currentIndex += direction;
+            if (currentIndex < 0) currentIndex = files.length - 1;
+            if (currentIndex >= files.length) currentIndex = 0;
+            displayFile(currentIndex);
+        }
+
+        function updateFileIndex() {
+            document.getElementById('currentFileIndex').textContent = currentIndex + 1;
+        }
+    </script>
+</body>
+</html>
